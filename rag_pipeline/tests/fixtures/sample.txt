@@ -1,0 +1,8 @@
+This is a sample text file.
+It contains multiple sentences for testing purposes.
+
+Here is another paragraph with some additional content.
+The chunker should be able to handle this properly.
+
+This is the third paragraph to ensure we have enough content for chunking tests.
+It contains enough sentences to test the overlap functionality.

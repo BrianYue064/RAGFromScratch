@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample HTML Document</title>
+    <script>console.log("this should be stripped");</script>
+</head>
+<body>
+    <header>
+        <nav>This is navigation content that should be removed.</nav>
+    </header>
+    <main>
+        <article>
+            <h1>Sample HTML Document</h1>
+            <p>This is a sample HTML file for testing the ingestion pipeline.</p>
+            <p>It contains multiple paragraphs of content.</p>
+            <p>Each paragraph should be extracted properly.</p>
+        </article>
+    </main>
+    <footer>
+        <p>This footer should also be stripped.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,7 @@
+beautifulsoup4
+docling
+lxml
+nltk
+pytest
+requests
+tiktoken
