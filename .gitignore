@@ -4,3 +4,4 @@
 /rag_pipeline/ingestion/__pycache__
 rag_pipeline/conftest.py
 /rag_pipeline/__pycache__
+/.venv

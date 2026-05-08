@@ -51,7 +51,7 @@ def load(path: Union[str, Path]) -> Document:
     if not file_path.exists():
         raise IngestionError(f"File not found: {file_path}")
 
-    file_type = _detect_file_type(file_path)
+    file_type = detect_file_type(file_path)
     logger.info(f"Loading document from file: {file_path} (type: {file_type})")
 
     content = _load_file(file_path, file_type)
@@ -72,7 +72,7 @@ def load(path: Union[str, Path]) -> Document:
     )
 
 
-def _detect_file_type(path: Path) -> str:
+def detect_file_type(path: Path) -> str:
     """Detect file type from path suffix."""
     suffix = path.suffix.lower()
     if suffix not in SUPPORTED_EXTENSIONS:
@@ -85,7 +85,7 @@ def _detect_file_type(path: Path) -> str:
 def _load_file(path: Path, file_type: str) -> str:
     """Load content from a file based on its type."""
     if file_type in ("pdf", "docx"):
-        return _load_via_docling(path, file_type)
+        return load_via_docling(path, file_type)
     elif file_type == "html":
         return parse_html_file(path)
     elif file_type == "text":
@@ -94,7 +94,7 @@ def _load_file(path: Path, file_type: str) -> str:
         raise UnsupportedFileTypeError(f"Unsupported file type: {file_type}")
 
 
-def _load_via_docling(path: Path, file_type: str) -> str:
+def load_via_docling(path: Path, file_type: str) -> str:
     """Load PDF or DOCX using Docling and convert to markdown."""
     converter = DocumentConverter()
 
