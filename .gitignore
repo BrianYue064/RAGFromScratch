@@ -1,0 +1,6 @@
+/rag_pipeline/tests/__pycache__
+/rag_pipeline/tests
+/rag_pipeline/ingestion/parsers/__pycache__
+/rag_pipeline/ingestion/__pycache__
+rag_pipeline/conftest.py
+/rag_pipeline/__pycache__
