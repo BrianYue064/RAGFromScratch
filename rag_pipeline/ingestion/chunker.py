@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 ENCODING = tiktoken.get_encoding("cl100k_base")
 
 
-def chunk(
-    doc: Document, chunk_size: int = 512, overlap: int = 50
-) -> List[Chunk]:
+def chunk(doc: Document, chunk_size: int = 512, overlap: int = 50) -> List[Chunk]:
     """Split a Document into chunks using sentence-boundary-aware chunking.
 
     Args:
@@ -50,7 +48,7 @@ def chunk(
         tokens_with_sentence = ENCODING.encode(current_chunk_text + " " + sentence)
 
         if len(tokens_with_sentence) <= chunk_size:
-            current_chunk_text = current_chunk_text + " " + sentence
+            current_chunk_text = (current_chunk_text + " " + sentence).lstrip()
             current_chunk_tokens = tokens_with_sentence
         else:
             if current_chunk_text:
@@ -95,7 +93,7 @@ def chunk(
                                 text=ENCODING.decode(token_batch).strip(),
                                 token_count=len(token_batch),
                                 source=doc.source,
-                                chunk_index=len(chunks) + i,
+                                chunk_index=len(chunks),
                                 metadata=dict(doc.metadata),
                             )
                         )

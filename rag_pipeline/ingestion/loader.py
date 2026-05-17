@@ -99,12 +99,7 @@ def load_via_docling(path: Path, file_type: str) -> str:
     converter = DocumentConverter()
 
     try:
-        if file_type == "pdf":
-            result = converter.convert(path)
-        elif file_type == "docx":
-            result = converter.convert(path)
-        else:
-            raise UnsupportedFileTypeError(f"Unsupported docling type: {file_type}")
+        result = converter.convert(path)
 
         return result.document.export_to_markdown()
 
