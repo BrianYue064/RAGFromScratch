@@ -1,0 +1,24 @@
+This is the first paragraph of a long test document.
+It contains multiple sentences that will be used to test the chunker.
+The chunker should split this document into several chunks.
+Each chunk should stay within the configured token limit.
+
+This is the second paragraph of the long test document.
+It provides additional content to ensure we can generate multiple chunks.
+The overlap between chunks should be visible in consecutive chunks.
+Overlap tokens help maintain context across chunk boundaries.
+
+This is the third paragraph of the long test document.
+It introduces new topics to challenge the chunking algorithm.
+Semantic coherence is important for retrieval-augmented generation.
+Chunks that preserve sentence boundaries are more readable.
+
+This is the fourth paragraph of the long test document.
+It continues to build on the previous topics with more detail.
+The chunking algorithm must handle paragraphs of varying lengths.
+Some paragraphs may be long while others are quite short.
+
+This is the fifth and final paragraph of the long test document.
+It wraps up all the content that has been presented so far.
+After chunking, each chunk should have sequential indices.
+The metadata from the original document should be preserved.

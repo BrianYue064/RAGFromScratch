@@ -22,9 +22,16 @@ def parse_html_file(path: Path) -> str:
 
     Returns:
         Extracted text content as a string.
+
+    Raises:
+        IngestionError: If the file cannot be read.
     """
-    with open(path, "r", encoding="utf-8") as f:
-        html_content = f.read()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+    except (FileNotFoundError, PermissionError, OSError) as e:
+        logger.error(f"Failed to read HTML file {path}: {e}")
+        raise IngestionError(f"Failed to read HTML file: {path}") from e
     return _extract_text_from_html(html_content)
 
 

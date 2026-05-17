@@ -16,6 +16,9 @@ ENCODING = tiktoken.get_encoding("cl100k_base")
 def chunk(doc: Document, chunk_size: int = 512, overlap: int = 50) -> List[Chunk]:
     """Split a Document into chunks using sentence-boundary-aware chunking.
 
+    Maintains token counts incrementally to avoid O(n^2) re-encoding of the
+    entire running text on every sentence.
+
     Args:
         doc: The Document to chunk.
         chunk_size: Target token count per chunk.
@@ -38,20 +41,19 @@ def chunk(doc: Document, chunk_size: int = 512, overlap: int = 50) -> List[Chunk
         return []
 
     chunks: List[Chunk] = []
-    current_chunk_text = ""
-    current_chunk_tokens = []
+    current_chunk_tokens: List[int] = []
 
     for sentence in sentences:
-        sentence_tokens = ENCODING.encode(sentence)
+        sentence_prefix = " " if current_chunk_tokens else ""
+        sentence_tokens = ENCODING.encode(sentence_prefix + sentence)
         sentence_token_count = len(sentence_tokens)
 
-        tokens_with_sentence = ENCODING.encode(current_chunk_text + " " + sentence)
+        projected_count = len(current_chunk_tokens) + sentence_token_count
 
-        if len(tokens_with_sentence) <= chunk_size:
-            current_chunk_text = (current_chunk_text + " " + sentence).lstrip()
-            current_chunk_tokens = tokens_with_sentence
+        if projected_count <= chunk_size:
+            current_chunk_tokens.extend(sentence_tokens)
         else:
-            if current_chunk_text:
+            if current_chunk_tokens:
                 token_count = len(current_chunk_tokens)
                 if token_count > chunk_size:
                     logger.warning(
@@ -60,7 +62,7 @@ def chunk(doc: Document, chunk_size: int = 512, overlap: int = 50) -> List[Chunk
 
                 chunks.append(
                     Chunk(
-                        text=current_chunk_text.strip(),
+                        text=ENCODING.decode(current_chunk_tokens).strip(),
                         token_count=token_count,
                         source=doc.source,
                         chunk_index=len(chunks),
@@ -68,39 +70,38 @@ def chunk(doc: Document, chunk_size: int = 512, overlap: int = 50) -> List[Chunk
                     )
                 )
 
-                if overlap > 0 and current_chunk_tokens:
-                    overlap_tokens = current_chunk_tokens[-overlap:]
-                    overlap_text = ENCODING.decode(overlap_tokens)
-                    current_chunk_text = overlap_text + " " + sentence
-                    current_chunk_tokens = ENCODING.encode(current_chunk_text)
+                if overlap > 0:
+                    current_chunk_tokens = list(current_chunk_tokens[-overlap:])
                 else:
-                    current_chunk_text = sentence
-                    current_chunk_tokens = sentence_tokens
-            else:
-                current_chunk_text = sentence
-                current_chunk_tokens = sentence_tokens
-
-                if sentence_token_count > chunk_size:
-                    logger.warning(
-                        f"Sentence exceeds chunk_size: {sentence_token_count} tokens"
-                    )
-                    tokens_split = _split_at_token_level(
-                        sentence_tokens, chunk_size, overlap
-                    )
-                    for i, token_batch in enumerate(tokens_split):
-                        chunks.append(
-                            Chunk(
-                                text=ENCODING.decode(token_batch).strip(),
-                                token_count=len(token_batch),
-                                source=doc.source,
-                                chunk_index=len(chunks),
-                                metadata=dict(doc.metadata),
-                            )
-                        )
-                    current_chunk_text = ""
                     current_chunk_tokens = []
+            else:
+                current_chunk_tokens = []
 
-    if current_chunk_text:
+            if sentence_token_count > chunk_size:
+                logger.warning(
+                    f"Sentence exceeds chunk_size: {sentence_token_count} tokens"
+                )
+                tokens_split = _split_at_token_level(
+                    sentence_tokens, chunk_size, overlap
+                )
+                for token_batch in tokens_split:
+                    chunks.append(
+                        Chunk(
+                            text=ENCODING.decode(token_batch).strip(),
+                            token_count=len(token_batch),
+                            source=doc.source,
+                            chunk_index=len(chunks),
+                            metadata=dict(doc.metadata),
+                        )
+                    )
+                if overlap > 0 and tokens_split:
+                    current_chunk_tokens = list(tokens_split[-1][-overlap:])
+                else:
+                    current_chunk_tokens = []
+            else:
+                current_chunk_tokens.extend(sentence_tokens)
+
+    if current_chunk_tokens:
         token_count = len(current_chunk_tokens)
         if token_count > chunk_size:
             logger.warning(
@@ -109,7 +110,7 @@ def chunk(doc: Document, chunk_size: int = 512, overlap: int = 50) -> List[Chunk
 
         chunks.append(
             Chunk(
-                text=current_chunk_text.strip(),
+                text=ENCODING.decode(current_chunk_tokens).strip(),
                 token_count=token_count,
                 source=doc.source,
                 chunk_index=len(chunks),

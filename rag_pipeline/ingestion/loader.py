@@ -16,6 +16,16 @@ from .parsers import (
 
 logger = logging.getLogger(__name__)
 
+_DOCLING_CONVERTER: DocumentConverter | None = None
+
+
+def _get_docling_converter() -> DocumentConverter:
+    global _DOCLING_CONVERTER
+    if _DOCLING_CONVERTER is None:
+        _DOCLING_CONVERTER = DocumentConverter()
+    return _DOCLING_CONVERTER
+
+
 SUPPORTED_EXTENSIONS = {
     ".pdf": "pdf",
     ".docx": "docx",
@@ -96,7 +106,7 @@ def _load_file(path: Path, file_type: str) -> str:
 
 def load_via_docling(path: Path, file_type: str) -> str:
     """Load PDF or DOCX using Docling and convert to markdown."""
-    converter = DocumentConverter()
+    converter = _get_docling_converter()
 
     try:
         result = converter.convert(path)

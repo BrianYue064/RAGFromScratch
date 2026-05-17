@@ -1,2 +1,6 @@
-# This file ensures pytest adds rag_pipeline/ to sys.path,
-# allowing test modules to import from the ingestion package.
+"""Pytest configuration: ensures rag_pipeline/ is on sys.path."""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))

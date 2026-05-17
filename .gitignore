@@ -1,6 +1,6 @@
-/rag_pipeline/tests/__pycache__
-/rag_pipeline/ingestion/parsers/__pycache__
-/rag_pipeline/ingestion/__pycache__
-/rag_pipeline/__pycache__
-/.venv
-uv.lock
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv
+.env
