@@ -1,33 +1,17 @@
-"""Data models and exceptions for the RAG ingestion pipeline."""
+"""Data models for the RAG ingestion pipeline."""
 
 import logging
 from dataclasses import dataclass, field
 
+# Re-export exceptions so existing imports still work.
+from rag_pipeline.models import (  # noqa: F401
+    ChunkingError,
+    IngestionError,
+    RAGPipelineError,
+    UnsupportedFileTypeError,
+)
+
 logger = logging.getLogger(__name__)
-
-
-class RAGPipelineError(Exception):
-    """Base exception for all RAG pipeline errors."""
-
-    pass
-
-
-class UnsupportedFileTypeError(RAGPipelineError):
-    """Raised when a file type is not supported for ingestion."""
-
-    pass
-
-
-class IngestionError(RAGPipelineError):
-    """Raised when content ingestion fails."""
-
-    pass
-
-
-class ChunkingError(RAGPipelineError):
-    """Raised when chunking fails."""
-
-    pass
 
 
 @dataclass

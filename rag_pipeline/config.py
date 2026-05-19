@@ -15,6 +15,7 @@ class Config:
     encoding: str = "cl100k_base"
     ollama_url: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"
+    embedding_dim: int = 768
     db_url: str = "postgresql://postgres:postgres@localhost:5432/rag"
 
 
@@ -25,6 +26,7 @@ def load_config() -> Config:
         encoding=os.getenv("RAG_ENCODING", "cl100k_base"),
         ollama_url=os.getenv("RAG_OLLAMA_URL", "http://localhost:11434"),
         embedding_model=os.getenv("RAG_EMBEDDING_MODEL", "nomic-embed-text"),
+        embedding_dim=int(os.getenv("RAG_EMBEDDING_DIM", "768")),
         db_url=os.getenv(
             "RAG_DB_URL", "postgresql://postgres:postgres@localhost:5432/rag"
         ),

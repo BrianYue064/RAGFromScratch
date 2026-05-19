@@ -1,0 +1,55 @@
+Metadata-Version: 2.4
+Name: ragfromscratch
+Version: 0.1.0
+Summary: Privacy-first, fully local RAG pipeline
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: beautifulsoup4==4.13.3
+Requires-Dist: docling==2.93.0
+Requires-Dist: lxml==5.3.1
+Requires-Dist: nltk==3.9.1
+Requires-Dist: requests==2.32.3
+Requires-Dist: tiktoken==0.9.0
+Requires-Dist: psycopg[binary]>=3.1
+Requires-Dist: pgvector>=0.3
+Provides-Extra: dev
+Requires-Dist: pytest==8.3.5; extra == "dev"
+Requires-Dist: pytest-docker>=3.1; extra == "dev"
+
+# RAG Pipeline - Data Ingestion and Chunking Module
+
+This module handles Phase 1 of a privacy-first, fully local RAG (Retrieval-Augmented Generation) pipeline. It is responsible for loading documents from various file formats and splitting them into semantic chunks suitable for vector embedding. All data processing happens locally on the machine—nothing leaves the server.
+
+## Setup
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Download the NLTK sentence tokenizer (one-time setup):
+
+```bash
+python -c "import nltk; nltk.download('punkt')"
+```
+
+## Usage
+
+```python
+from ingestion import load, chunk
+
+doc = load("document.pdf")
+chunks = chunk(doc, chunk_size=512, overlap=50)
+
+print(f"Number of chunks: {len(chunks)}")
+print(f"First chunk: {chunks[0].text[:200]}...")
+```
+
+## Design Decisions
+
+**Docling over unstructured.io**: Docling is a local, privacy-preserving library that converts PDFs and DOCX files to clean markdown without sending data to external APIs. It produces well-structured output ideal for chunking.
+
+**tiktoken as measurement, not processing**: tiktoken is used only to count tokens and measure chunk sizes. It is not used to generate embeddings or modify text.
+
+**Sentence-boundary chunking**: Splitting on sentence boundaries (via NLTK's `sent_tokenize`) preserves semantic coherence better than arbitrary fixed-size splitting. The chunker accumulates sentences until the token limit is reached, then carries overlapping tokens to the next chunk to maintain context across chunk boundaries.
