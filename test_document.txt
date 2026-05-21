@@ -1,0 +1,9 @@
+This is a test document for the RAG pipeline.
+
+It contains multiple sentences to demonstrate the chunking functionality. The document discusses various topics including artificial intelligence, machine learning, and natural language processing.
+
+RAG systems combine retrieval and generation to improve the quality of AI responses. They work by finding relevant documents and using them as context for generating answers.
+
+Privacy is important in AI systems. Local processing ensures that sensitive data never leaves your control.
+
+The chunking algorithm should preserve semantic boundaries while maintaining consistent token counts across chunks.
