@@ -6,6 +6,10 @@ from typing import List
 import nltk
 import tiktoken
 
+# Ensure required NLTK data is available; downloads silently if missing.
+nltk.download("punkt", quiet=True)
+nltk.download("punkt_tab", quiet=True)
+
 from .models import Chunk, ChunkingError, Document
 
 logger = logging.getLogger(__name__)

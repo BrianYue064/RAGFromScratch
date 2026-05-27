@@ -34,7 +34,6 @@ class PgVectorStore:
         self._config = config
         try:
             self._conn = psycopg.connect(config.db_url, autocommit=False)
-            register_vector(self._conn)
             logger.info("Connected to PostgreSQL")
         except psycopg.Error as e:
             raise VectorStoreError(
@@ -53,6 +52,9 @@ class PgVectorStore:
         try:
             with self._conn.cursor() as cur:
                 cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            self._conn.commit()
+            register_vector(self._conn)
+            with self._conn.cursor() as cur:
                 cur.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS chunks (
