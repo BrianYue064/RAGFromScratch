@@ -17,6 +17,12 @@ class Config:
     embedding_model: str = "nomic-embed-text"
     embedding_dim: int = 768
     db_url: str = "postgresql://postgres:postgres@localhost:5432/rag"
+    llm_provider: str = "lmstudio"
+    llm_model: str = "qwen3.5-0.8b"
+    lmstudio_url: str = "http://localhost:1234"
+    llm_temperature: float = 0.7
+    llm_max_tokens: int = 1024
+    top_k: int = 5
 
 
 def load_config() -> Config:
@@ -30,4 +36,10 @@ def load_config() -> Config:
         db_url=os.getenv(
             "RAG_DB_URL", "postgresql://postgres:postgres@localhost:5432/rag"
         ),
+        llm_provider=os.getenv("RAG_LLM_PROVIDER", "lmstudio"),
+        llm_model=os.getenv("RAG_LLM_MODEL", "qwen3.5-0.8b"),
+        lmstudio_url=os.getenv("RAG_LMSTUDIO_URL", "http://localhost:1234"),
+        llm_temperature=float(os.getenv("RAG_LLM_TEMPERATURE", "0.7")),
+        llm_max_tokens=int(os.getenv("RAG_LLM_MAX_TOKENS", "1024")),
+        top_k=int(os.getenv("RAG_TOP_K", "5")),
     )

@@ -40,3 +40,9 @@ class VectorStoreError(RAGPipelineError):
     """Raised when vector store operations fail."""
 
     pass
+
+
+class GenerationError(RAGPipelineError):
+    """Raised when LLM generation fails."""
+
+    pass

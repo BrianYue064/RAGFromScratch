@@ -148,9 +148,9 @@ class PgVectorStore:
         """
         sql = """
             SELECT chunk_id, text, source, chunk_index, metadata,
-                   1 - (embedding <=> %s) AS similarity
+                   1 - (embedding <=> %s::vector) AS similarity
             FROM chunks
-            ORDER BY embedding <=> %s
+            ORDER BY embedding <=> %s::vector
             LIMIT %s;
         """
         try:

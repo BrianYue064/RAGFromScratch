@@ -58,6 +58,26 @@ def main():
         "--top-k", type=int, default=5, help="Number of results"
     )
 
+    # --- query (Phase 3) ---
+    query_parser = subparsers.add_parser(
+        "query", help="Answer a question using RAG"
+    )
+    query_parser.add_argument(
+        "question", type=str, help="The question to answer"
+    )
+    query_parser.add_argument(
+        "--top-k", type=int, default=None,
+        help="Number of retrieval results (default: config.top_k)",
+    )
+    query_parser.add_argument(
+        "--model", type=str, default=None,
+        help="Override the LLM model (default: config.llm_model)",
+    )
+    query_parser.add_argument(
+        "--provider", type=str, default=None,
+        help="Override the LLM provider (ollama or lmstudio)",
+    )
+
     args = parser.parse_args()
 
     chunk_size = getattr(args, "chunk_size", None) or config.chunk_size
@@ -115,6 +135,35 @@ def main():
                 f"  [{r['similarity']:.3f}] ({r['source']}) "
                 f"{r['text'][:100]}..."
             )
+
+    elif args.command == "query":
+        from rag_pipeline.generation import rag_query
+
+        top_k = args.top_k or config.top_k
+        model = args.model or config.llm_model
+        provider = args.provider or config.llm_provider
+
+        print("Querying with LLM...")
+        result = rag_query(args.question, config)
+        top_sim = (
+            result["sources"][0]["similarity"]
+            if result["sources"] else "N/A"
+        )
+        print(
+            f"Retrieved {len(result['sources'])} chunks "
+            f"(top similarity: {top_sim})"
+        )
+        print()
+        print("Answer:")
+        print(f"  {result['answer']}")
+        print()
+        if result["sources"]:
+            print("Sources:")
+            for src in result["sources"]:
+                print(
+                    f"  [{src['similarity']:.3f}] ({src['source']}) "
+                    f"{src['text'][:80]}..."
+                )
 
     else:
         parser.print_help()
