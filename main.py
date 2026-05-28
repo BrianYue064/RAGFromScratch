@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from rag_pipeline.config import load_config
-from rag_pipeline.ingestion import chunk, load
+from rag_pipeline.ingestion import chunk, load, resolve_paths
 
 
 def main():
@@ -20,7 +20,8 @@ def main():
         "ingest", help="Ingest and chunk a document"
     )
     ingest_parser.add_argument(
-        "path", type=str, help="File path or URL to ingest"
+        "paths", type=str, nargs="+",
+        help="One or more file paths, URLs, or a folder to ingest"
     )
     ingest_parser.add_argument(
         "--chunk-size", type=int, default=None,
@@ -36,7 +37,8 @@ def main():
         "embed", help="Ingest, embed, and store a document"
     )
     embed_parser.add_argument(
-        "path", type=str, help="File path or URL to ingest"
+        "paths", type=str, nargs="+",
+        help="One or more file paths, URLs, or a folder to embed"
     )
     embed_parser.add_argument(
         "--chunk-size", type=int, default=None,
@@ -84,40 +86,56 @@ def main():
     overlap = getattr(args, "overlap", None) or config.overlap
 
     if args.command == "ingest":
-        doc = load(args.path)
-        print(
-            f"Loaded: {doc.source} "
-            f"({len(doc.content)} chars, type: {doc.file_type})"
-        )
-        chunks = chunk(doc, chunk_size=chunk_size, overlap=overlap)
-        print(f"Generated {len(chunks)} chunks")
-        for c in chunks:
+        resolved = resolve_paths(args.paths)
+        print(f"Resolved {len(resolved)} file(s) for ingestion\n")
+
+        for i, file_path in enumerate(resolved, 1):
+            print(f"--- [{i}/{len(resolved)}] {file_path} ---")
+            doc = load(str(file_path))
             print(
-                f"  [{c.chunk_index}] {c.token_count} tokens: "
-                f"{c.text[:60]}..."
+                f"Loaded: {doc.source} "
+                f"({len(doc.content)} chars, type: {doc.file_type})"
             )
+            chunks = chunk(doc, chunk_size=chunk_size, overlap=overlap)
+            print(f"Generated {len(chunks)} chunks")
+            for c in chunks:
+                print(
+                    f"  [{c.chunk_index}] {c.token_count} tokens: "
+                    f"{c.text[:60]}..."
+                )
+            print()
 
     elif args.command == "embed":
         from rag_pipeline.vectorstore import embed_chunks, PgVectorStore
 
-        doc = load(args.path)
-        print(
-            f"Loaded: {doc.source} "
-            f"({len(doc.content)} chars, type: {doc.file_type})"
-        )
-
-        chunks_list = chunk(doc, chunk_size=chunk_size, overlap=overlap)
-        print(f"Generated {len(chunks_list)} chunks")
-
-        print(f"Embedding with {config.embedding_model}...")
-        embedded = embed_chunks(chunks_list, config)
-        print(f"Embedded {len(embedded)} chunks ({config.embedding_dim} dims)")
+        resolved = resolve_paths(args.paths)
+        print(f"Resolved {len(resolved)} file(s) for embedding\n")
 
         store = PgVectorStore(config)
         store.initialize()
-        count = store.insert(embedded)
+        total_stored = 0
+
+        for i, file_path in enumerate(resolved, 1):
+            print(f"--- [{i}/{len(resolved)}] {file_path} ---")
+            doc = load(str(file_path))
+            print(
+                f"Loaded: {doc.source} "
+                f"({len(doc.content)} chars, type: {doc.file_type})"
+            )
+
+            chunks_list = chunk(doc, chunk_size=chunk_size, overlap=overlap)
+            print(f"Generated {len(chunks_list)} chunks")
+
+            print(f"Embedding with {config.embedding_model}...")
+            embedded = embed_chunks(chunks_list, config)
+            print(f"Embedded {len(embedded)} chunks ({config.embedding_dim} dims)")
+
+            count = store.insert(embedded)
+            total_stored += count
+            print(f"Stored {count} chunks from {doc.source}\n")
+
         store.close()
-        print(f"Stored {count} chunks from {doc.source}")
+        print(f"Done — stored {total_stored} total chunks from {len(resolved)} file(s)")
 
     elif args.command == "retrieve":
         from rag_pipeline.vectorstore import embed_text, PgVectorStore
