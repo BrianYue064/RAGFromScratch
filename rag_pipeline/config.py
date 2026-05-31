@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Config:
-    chunk_size: int = 512
-    overlap: int = 50
+    chunk_size: int = 256
+    overlap: int = 30
     encoding: str = "cl100k_base"
     ollama_url: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"

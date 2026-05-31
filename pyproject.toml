@@ -32,3 +32,6 @@ build-backend = "setuptools.build_meta"
 markers = [
     "integration: requires external services (PostgreSQL via Docker, Ollama)",
 ]
+
+[tool.setuptools.packages.find]
+exclude = ["TestingData*"]
