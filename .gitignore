@@ -8,3 +8,4 @@ nul
 *.egg-info/
 dist/
 build/
+/PrivateENV
