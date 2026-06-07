@@ -7,7 +7,7 @@ All data stays local — zero egress from the home server.
 import logging
 import time
 
-import requests
+import httpx
 
 from rag_pipeline.config import Config
 from rag_pipeline.models import EmbeddingError
@@ -39,18 +39,18 @@ def embed_text(text: str, config: Config) -> list[float]:
 
     try:
         start = time.perf_counter()
-        response = requests.post(url, json=payload, timeout=_REQUEST_TIMEOUT)
+        response = httpx.post(url, json=payload, timeout=_REQUEST_TIMEOUT)
         response.raise_for_status()
         elapsed_ms = (time.perf_counter() - start) * 1000
-    except requests.ConnectionError as e:
+    except httpx.ConnectError as e:
         raise EmbeddingError(
             f"Cannot connect to Ollama at {config.ollama_url}"
         ) from e
-    except requests.Timeout as e:
+    except httpx.TimeoutException as e:
         raise EmbeddingError(
             f"Ollama request timed out after {_REQUEST_TIMEOUT}s"
         ) from e
-    except requests.RequestException as e:
+    except httpx.HTTPError as e:
         raise EmbeddingError(f"Ollama embedding request failed: {e}") from e
 
     data = response.json()

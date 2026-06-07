@@ -23,6 +23,8 @@ class Config:
     llm_temperature: float = 0.7
     llm_max_tokens: int = 1024
     top_k: int = 10
+    api_host: str = "127.0.0.1"
+    api_port: int = 8000
 
 
 def load_config() -> Config:
@@ -42,4 +44,6 @@ def load_config() -> Config:
         llm_temperature=float(os.getenv("RAG_LLM_TEMPERATURE", "0.7")),
         llm_max_tokens=int(os.getenv("RAG_LLM_MAX_TOKENS", "1024")),
         top_k=int(os.getenv("RAG_TOP_K", "10")),
+        api_host=os.getenv("RAG_API_HOST", "127.0.0.1"),
+        api_port=int(os.getenv("RAG_API_PORT", "8000")),
     )

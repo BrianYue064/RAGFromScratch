@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import requests
+import httpx
 from bs4 import BeautifulSoup
 
 from ..models import IngestionError
@@ -48,12 +48,12 @@ def parse_html_url(url: str) -> str:
         IngestionError: If the request fails or times out.
     """
     try:
-        response = requests.get(url, timeout=HTML_REQUEST_TIMEOUT)
+        response = httpx.get(url, timeout=HTML_REQUEST_TIMEOUT, follow_redirects=True)
         response.raise_for_status()
-    except requests.Timeout as e:
+    except httpx.TimeoutException as e:
         logger.error(f"Request timeout for URL {url}: {e}")
         raise IngestionError(f"Request timeout for {url}") from e
-    except requests.RequestException as e:
+    except httpx.HTTPError as e:
         logger.error(f"Request failed for URL {url}: {e}")
         raise IngestionError(f"Request failed for {url}") from e
 

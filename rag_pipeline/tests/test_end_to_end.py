@@ -66,7 +66,7 @@ def store(pg_config):
 
 
 def _mock_embed_response():
-    """Create a mock requests response with a TEST_DIM-dim vector."""
+    """Create a mock httpx response with a TEST_DIM-dim vector."""
     mock_resp = MagicMock()
     mock_resp.json.return_value = {"embeddings": [[0.5] * TEST_DIM]}
     mock_resp.raise_for_status.return_value = None
@@ -77,7 +77,7 @@ def _mock_embed_response():
 class TestEndToEnd:
     """End-to-end tests for the full pipeline."""
 
-    @patch("rag_pipeline.vectorstore.embedder.requests.post")
+    @patch("rag_pipeline.vectorstore.embedder.httpx.post")
     def test_ingest_embed_store_retrieve(self, mock_post, store, pg_config):
         """Full pipeline: load a file → chunk → embed → store → retrieve."""
         mock_post.return_value = _mock_embed_response()
@@ -104,7 +104,7 @@ class TestEndToEnd:
         assert "similarity" in results[0]
         assert "text" in results[0]
 
-    @patch("rag_pipeline.vectorstore.embedder.requests.post")
+    @patch("rag_pipeline.vectorstore.embedder.httpx.post")
     def test_round_trip_preserves_content(self, mock_post, store, pg_config):
         """Stored text should exactly match the original chunk text."""
         mock_post.return_value = _mock_embed_response()

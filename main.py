@@ -162,7 +162,13 @@ def main():
         provider = args.provider or config.llm_provider
 
         print("Querying with LLM...")
-        result = rag_query(args.question, config)
+        result = rag_query(
+            args.question, 
+            config,
+            top_k=args.top_k,
+            model=args.model,
+            provider=args.provider
+        )
         top_sim = (
             result["sources"][0]["similarity"]
             if result["sources"] else "N/A"

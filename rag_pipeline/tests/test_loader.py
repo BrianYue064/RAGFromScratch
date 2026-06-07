@@ -97,7 +97,7 @@ def test_load_url():
     """Test loading from a URL returns Document with html file_type."""
     fake_html = "<html><body><p>Hello from the web.</p></body></html>"
 
-    with patch("ingestion.parsers.html_parser.requests.get") as mock_get:
+    with patch("rag_pipeline.ingestion.parsers.html_parser.httpx.get") as mock_get:
         mock_response = mock_get.return_value
         mock_response.text = fake_html
         mock_response.raise_for_status.return_value = None

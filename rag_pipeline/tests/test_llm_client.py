@@ -46,30 +46,32 @@ def _mock_lmstudio_response(text: str):
 
 
 class TestGenerateOllama:
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_ollama_success(self, mock_post, config):
         """Mock Ollama response returns generated text."""
         mock_post.return_value = _mock_ollama_response("Paris is the capital.")
         result = generate("What is the capital?", config)
         assert result == "Paris is the capital."
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_ollama_connection_error(self, mock_post, config):
         """ConnectionError raises GenerationError."""
-        import requests
-        mock_post.side_effect = requests.ConnectionError("refused")
+        import httpx
+
+        mock_post.side_effect = httpx.ConnectError("refused")
         with pytest.raises(GenerationError, match="Cannot connect to Ollama"):
             generate("test", config)
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_ollama_timeout(self, mock_post, config):
         """Timeout raises GenerationError."""
-        import requests
-        mock_post.side_effect = requests.Timeout("timed out")
+        import httpx
+
+        mock_post.side_effect = httpx.TimeoutException("timed out")
         with pytest.raises(GenerationError, match="timed out"):
             generate("test", config)
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_ollama_empty_response(self, mock_post, config):
         """Missing 'response' key raises GenerationError."""
         mock_resp = MagicMock()
@@ -79,7 +81,7 @@ class TestGenerateOllama:
         with pytest.raises(GenerationError, match="missing 'response'"):
             generate("test", config)
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_sends_correct_ollama_payload(self, mock_post, config):
         """Verify request body matches Ollama API contract."""
         mock_post.return_value = _mock_ollama_response("answer")
@@ -98,26 +100,27 @@ class TestGenerateOllama:
 
 
 class TestGenerateLMStudio:
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_lmstudio_success(self, mock_post, lmstudio_config):
         """Mock LM Studio response returns generated text."""
         mock_post.return_value = _mock_lmstudio_response("Paris is capital.")
         result = generate("What is capital?", lmstudio_config)
         assert result == "Paris is capital."
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_lmstudio_connection_error(
         self, mock_post, lmstudio_config
     ):
         """ConnectionError raises GenerationError."""
-        import requests
-        mock_post.side_effect = requests.ConnectionError("refused")
+        import httpx
+
+        mock_post.side_effect = httpx.ConnectError("refused")
         with pytest.raises(
             GenerationError, match="Cannot connect to LM Studio"
         ):
             generate("test", lmstudio_config)
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_lmstudio_empty_choices(
         self, mock_post, lmstudio_config
     ):
@@ -131,7 +134,7 @@ class TestGenerateLMStudio:
         ):
             generate("test", lmstudio_config)
 
-    @patch("rag_pipeline.generation.llm_client.requests.post")
+    @patch("rag_pipeline.generation.llm_client.httpx.post")
     def test_generate_sends_correct_lmstudio_payload(
         self, mock_post, lmstudio_config
     ):

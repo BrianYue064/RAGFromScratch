@@ -4,10 +4,12 @@ Supports Ollama (/api/generate) and LM Studio (OpenAI-compatible
 /v1/chat/completions) behind a unified generate() function.
 """
 
+import json
 import logging
 import time
+from typing import Generator
 
-import requests
+import httpx
 
 from rag_pipeline.config import Config
 from rag_pipeline.models import GenerationError
@@ -57,18 +59,18 @@ def _generate_ollama(prompt: str, config: Config) -> str:
 
     try:
         start = time.perf_counter()
-        response = requests.post(url, json=payload, timeout=_REQUEST_TIMEOUT)
+        response = httpx.post(url, json=payload, timeout=_REQUEST_TIMEOUT)
         response.raise_for_status()
         elapsed_ms = (time.perf_counter() - start) * 1000
-    except requests.ConnectionError as e:
+    except httpx.ConnectError as e:
         raise GenerationError(
             f"Cannot connect to Ollama at {config.ollama_url}"
         ) from e
-    except requests.Timeout as e:
+    except httpx.TimeoutException as e:
         raise GenerationError(
             f"Ollama request timed out after {_REQUEST_TIMEOUT}s"
         ) from e
-    except requests.RequestException as e:
+    except httpx.HTTPError as e:
         raise GenerationError(
             f"Ollama generation request failed: {e}"
         ) from e
@@ -104,24 +106,24 @@ def _generate_lmstudio(prompt: str, config: Config) -> str:
 
     try:
         start = time.perf_counter()
-        response = requests.post(url, json=payload, timeout=_REQUEST_TIMEOUT)
+        response = httpx.post(url, json=payload, timeout=_REQUEST_TIMEOUT)
         response.raise_for_status()
         elapsed_ms = (time.perf_counter() - start) * 1000
-    except requests.ConnectionError as e:
+    except httpx.ConnectError as e:
         raise GenerationError(
             f"Cannot connect to LM Studio at {config.lmstudio_url}"
         ) from e
-    except requests.Timeout as e:
+    except httpx.TimeoutException as e:
         raise GenerationError(
             f"LM Studio request timed out after {_REQUEST_TIMEOUT}s"
         ) from e
-    except requests.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         body = e.response.text if e.response is not None else "no body"
         raise GenerationError(
             f"LM Studio generation request failed: {e}\n"
             f"Response body: {body}"
         ) from e
-    except requests.RequestException as e:
+    except httpx.HTTPError as e:
         raise GenerationError(
             f"LM Studio generation request failed: {e}"
         ) from e
@@ -143,3 +145,94 @@ def _generate_lmstudio(prompt: str, config: Config) -> str:
         elapsed_ms,
     )
     return answer
+
+
+def generate_stream(prompt: str, config: Config) -> Generator[str, None, None]:
+    """Yield token chunks from the LLM as they arrive.
+
+    Args:
+        prompt: The full prompt string.
+        config: Pipeline configuration.
+
+    Yields:
+        Generated text fragments.
+
+    Raises:
+        GenerationError: On connection failures or timeouts.
+    """
+    if config.llm_provider == "ollama":
+        yield from _generate_stream_ollama(prompt, config)
+    elif config.llm_provider == "lmstudio":
+        yield from _generate_stream_lmstudio(prompt, config)
+    else:
+        raise GenerationError(
+            f"Unknown LLM provider: {config.llm_provider!r}."
+        )
+
+
+def _generate_stream_ollama(prompt: str, config: Config) -> Generator[str, None, None]:
+    """Stream response via Ollama /api/generate."""
+    url = f"{config.ollama_url}/api/generate"
+    payload = {
+        "model": config.llm_model,
+        "prompt": prompt,
+        "stream": True,
+        "options": {
+            "temperature": config.llm_temperature,
+            "num_predict": config.llm_max_tokens,
+        },
+    }
+
+    try:
+        with httpx.stream("POST", url, json=payload, timeout=_REQUEST_TIMEOUT) as response:
+            response.raise_for_status()
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        if "response" in data:
+                            yield data["response"]
+                    except json.JSONDecodeError:
+                        continue
+    except httpx.ConnectError as e:
+        raise GenerationError(f"Cannot connect to Ollama at {config.ollama_url}") from e
+    except httpx.TimeoutException as e:
+        raise GenerationError(f"Ollama streaming request timed out after {_REQUEST_TIMEOUT}s") from e
+    except httpx.HTTPError as e:
+        raise GenerationError(f"Ollama streaming request failed: {e}") from e
+
+
+def _generate_stream_lmstudio(prompt: str, config: Config) -> Generator[str, None, None]:
+    """Stream response via LM Studio (OpenAI-compatible) /v1/chat/completions."""
+    url = f"{config.lmstudio_url}/v1/chat/completions"
+    payload = {
+        "model": config.llm_model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": config.llm_temperature,
+        "max_tokens": config.llm_max_tokens,
+        "stream": True,
+    }
+
+    try:
+        with httpx.stream("POST", url, json=payload, timeout=_REQUEST_TIMEOUT) as response:
+            response.raise_for_status()
+            for line in response.iter_lines():
+                if line.startswith("data: "):
+                    data_str = line[6:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        data = json.loads(data_str)
+                        choices = data.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            if "content" in delta:
+                                yield delta["content"]
+                    except json.JSONDecodeError:
+                        continue
+    except httpx.ConnectError as e:
+        raise GenerationError(f"Cannot connect to LM Studio at {config.lmstudio_url}") from e
+    except httpx.TimeoutException as e:
+        raise GenerationError(f"LM Studio streaming request timed out after {_REQUEST_TIMEOUT}s") from e
+    except httpx.HTTPError as e:
+        raise GenerationError(f"LM Studio streaming request failed: {e}") from e
