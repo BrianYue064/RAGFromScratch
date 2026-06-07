@@ -129,8 +129,8 @@ All settings are controlled via `RAG_`-prefixed environment variables. Set them 
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `RAG_CHUNK_SIZE` | `512` | Target token count per chunk |
-| `RAG_OVERLAP` | `50` | Overlap tokens between consecutive chunks |
+| `RAG_CHUNK_SIZE` | `768` | Target token count per chunk |
+| `RAG_OVERLAP` | `150` | Overlap tokens between consecutive chunks |
 | `RAG_ENCODING` | `cl100k_base` | tiktoken encoding name |
 | `RAG_OLLAMA_URL` | `http://localhost:11434` | Ollama server URL |
 | `RAG_EMBEDDING_MODEL` | `nomic-embed-text` | Ollama embedding model name |
