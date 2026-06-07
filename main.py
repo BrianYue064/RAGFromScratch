@@ -150,8 +150,8 @@ def main():
         print(f"Top {len(results)} results:")
         for r in results:
             print(
-                f"  [{r['similarity']:.3f}] ({r['source']}) "
-                f"{r['text'][:100]}..."
+                f"  [{r['similarity']:.3f}] ({r['source']})\n"
+                f"{r['text']}\n"
             )
 
     elif args.command == "query":

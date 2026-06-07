@@ -40,7 +40,7 @@ The pipeline is split into three phases, each exposed as a CLI command:
 ### Pull the Ollama embedding model
 
 ```bash
-ollama pull nomic-embed-text
+ollama pull embeddinggema:latest
 ```
 
 ### Create the PostgreSQL database
@@ -242,7 +242,7 @@ RAGFromScratch/
 
 **Sentence-boundary chunking** — Splitting on sentence boundaries (via NLTK `sent_tokenize`) preserves semantic coherence better than arbitrary fixed-size splitting. The chunker accumulates sentences until the token limit is reached, then carries overlapping tokens to the next chunk to maintain context across boundaries.
 
-**Ollama for embeddings** — All embedding calls go through Ollama's local `/api/embed` endpoint. The default model (`nomic-embed-text`, 768 dimensions) runs entirely on the local machine.
+**Ollama for embeddings** — All embedding calls go through Ollama's local `/api/embed` endpoint. The default model (`embeddinggemma:latest`, 768 dimensions) runs entirely on the local machine.
 
 **PostgreSQL + pgvector for storage** — Embeddings are stored in PostgreSQL with the pgvector extension, using cosine similarity (`<=>` operator) for retrieval and an HNSW index for fast approximate nearest neighbor search.
 
